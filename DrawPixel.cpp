@@ -7,6 +7,8 @@ int WINAPI WinMain(
 	_In_ LPSTR lpCmdLine,
 	_In_ int nShowCmd)
 {
+	int i;
+
 	ChangeWindowMode(TRUE);               //非全画面にセット
 	SetGraphMode(640, 480, 32);           //画面サイズ指定
 	SetOutApplicationLogValidFlag(FALSE); //Log.txtを生成しないように設定
@@ -16,8 +18,15 @@ int WINAPI WinMain(
 		return -1;			// エラーが起きたら直ちに終了
 	}
 
-	// 画面に絵を表示
-	LoadGraphScreen(0, 0, "assets/test1.bmp", FALSE);
+	// 一番左上に絵を表示、２０分の１秒待つ、を１３回繰り返す
+	for (i = 0; i < 13; i++)
+	{
+		// 絵を表示、絵を描くＸ座標は i が１増えるごとに１０ドットづつ右にずれてゆく
+		LoadGraphScreen(i * 10, 100, "test1.bmp", FALSE);
+
+		// ２０分の１秒待つ
+		WaitTimer(50);
+	}
 
 	WaitKey();				// キー入力待ち
 

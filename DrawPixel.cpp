@@ -7,8 +7,12 @@ int WINAPI WinMain(
 	_In_ LPSTR lpCmdLine,
 	_In_ int nShowCmd)
 {
+	int BallX, BallY, BallGraph;
+	int SikakuX, SikakuY, SikakuGraph;
+	int i;
+
 	ChangeWindowMode(TRUE);               //非全画面にセット
-	SetGraphMode(640, 480, 32);           //画面サイズ指定
+	SetGraphMode(640, 480, 16);           //画面サイズ指定
 	SetOutApplicationLogValidFlag(FALSE); //Log.txtを生成しないように設定
 
 	if (DxLib_Init() == -1) // ＤＸライブラリ初期化処理
@@ -19,34 +23,39 @@ int WINAPI WinMain(
 	// 描画先を裏画面にする
 	SetDrawScreen(DX_SCREEN_BACK);
 
-	int x = 0, y = 0;
-	int GraphHandle;
+	// ボール君のグラフィックをメモリにロード＆表示座標をセット
+	BallGraph = LoadGraph("Ball.png");
+	BallX = -64; BallY = 0;
 
-	// グラフィック『test1.bmp』をメモリにロード
-	GraphHandle = LoadGraph("test1.bmp");
+	// 四角君のグラフィックをメモリにロード＆表示座標をセット
+	SikakuGraph = LoadGraph("Sikaku.png");
+	SikakuX = 640; SikakuY = 300;
 
-	while (true)
+	// 移動ルーチン
+	for (i = 0; i < 400; i++)
 	{
-		// 画面に描かれているものをすべて消す
+		// 画面を初期化(真っ黒にする)
 		ClearDrawScreen();
 
-		// 上下左右のキー入力に対応して x, y の座標値を変更する
-		if (CheckHitKey(KEY_INPUT_LEFT)  == 1) x -= 8;
-		if (CheckHitKey(KEY_INPUT_RIGHT) == 1) x += 8;
-		if (CheckHitKey(KEY_INPUT_UP)    == 1) y -= 8;
-		if (CheckHitKey(KEY_INPUT_DOWN)  == 1) y += 8;
+		// ボール君の座標を少しずらす
+		BallX += 3;
 
-		// 0,0 座標にメモリに読みこんだグラフィックを描画
-		DrawGraph(x, y, GraphHandle, FALSE);
+		// ボール君を描画
+		DrawGraph(BallX, BallY, BallGraph, FALSE);
 
-		// 裏画面の内容を表画面に反映させる
+		// 四角君の座標を少しずらす
+		SikakuX -= 3;
+		SikakuY -= 2;
+
+		// 四角君を描画
+		DrawGraph(SikakuX, SikakuY, SikakuGraph, FALSE);
+
+		// 裏画面の内容を表画面にコピーする
 		ScreenFlip();
 
-		// 待たないと処理が早すぎるのでここで２０ミリ秒待つ
-		WaitTimer(20);
-
-		// Windows システムからくる情報を処理する
-		if (ProcessMessage() == -1) break;
+		// Windows 特有の面倒な処理をＤＸライブラリにやらせる
+		// -1 が返ってきたらループを抜ける
+		if (ProcessMessage() < 0) break;
 
 		// ＥＳＣキーが押されたらループから抜ける
 		if (CheckHitKey(KEY_INPUT_ESCAPE) == 1) break;

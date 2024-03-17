@@ -18,20 +18,37 @@ int WINAPI WinMain(
 		return -1;			// エラーが起きたら直ちに終了
 	}
 
-	// 一番左上に絵を表示、２０分の１秒待つ、を１３回繰り返す
-	for (i = 0; i < 13; i++)
+	// 描画先を裏画面にする
+	SetDrawScreen(DX_SCREEN_BACK);
+
+	int x = 0, y = 0;
+
+	while (1)
 	{
-		// 画面に描かれているものを一回全部消す
+		// 画面に描かれているものをすべて消す
 		ClearDrawScreen();
 
-		// 絵を表示、絵を描くＸ座標は i が１増えるごとに１０ドットづつ右にずれてゆく
-		LoadGraphScreen(i * 20, 100, "test1.bmp", FALSE);
+		// 上下左右のキー入力に対応して x, y の座標値を変更する
+		if (CheckHitKey(KEY_INPUT_LEFT)  == 1) x -= 8;
+		if (CheckHitKey(KEY_INPUT_RIGHT) == 1) x += 8;
+		if (CheckHitKey(KEY_INPUT_UP)    == 1) y -= 8;
+		if (CheckHitKey(KEY_INPUT_DOWN)  == 1) y += 8;
 
-		// ２０分の１秒待つ
-		WaitTimer(50);
+		// x , y が示す画面座標にＢＭＰ画像 test1.bmp を描画する
+		LoadGraphScreen(x, y, "test1.bmp", TRUE);
+
+		// 裏画面の内容を表画面に反映させる
+		ScreenFlip();
+
+		// 待たないと処理が早すぎるのでここで２０ミリ秒待つ
+		WaitTimer(20);
+
+		// Windows システムからくる情報を処理する
+		if (ProcessMessage() == -1) break;
+
+		// ＥＳＣキーが押されたらループから抜ける
+		if (CheckHitKey(KEY_INPUT_ESCAPE) == 1) break;
 	}
-
-	WaitKey();				// キー入力待ち
 
 	DxLib_End();			// ＤＸライブラリ使用の終了処理
 

@@ -7,8 +7,6 @@ int WINAPI WinMain(
 	_In_ LPSTR lpCmdLine,
 	_In_ int nShowCmd)
 {
-	int i;
-
 	ChangeWindowMode(TRUE);               //非全画面にセット
 	SetGraphMode(640, 480, 32);           //画面サイズ指定
 	SetOutApplicationLogValidFlag(FALSE); //Log.txtを生成しないように設定

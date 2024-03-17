@@ -21,8 +21,11 @@ int WINAPI WinMain(
 	// ˆê”Ô¶ã‚ÉŠG‚ğ•\¦A‚Q‚O•ª‚Ì‚P•b‘Ò‚ÂA‚ğ‚P‚R‰ñŒJ‚è•Ô‚·
 	for (i = 0; i < 13; i++)
 	{
+		// ‰æ–Ê‚É•`‚©‚ê‚Ä‚¢‚é‚à‚Ì‚ğˆê‰ñ‘S•”Á‚·
+		ClearDrawScreen();
+
 		// ŠG‚ğ•\¦AŠG‚ğ•`‚­‚wÀ•W‚Í i ‚ª‚P‘‚¦‚é‚²‚Æ‚É‚P‚Oƒhƒbƒg‚Ã‚Â‰E‚É‚¸‚ê‚Ä‚ä‚­
-		LoadGraphScreen(i * 10, 100, "test1.bmp", FALSE);
+		LoadGraphScreen(i * 20, 100, "test1.bmp", FALSE);
 
 		// ‚Q‚O•ª‚Ì‚P•b‘Ò‚Â
 		WaitTimer(50);

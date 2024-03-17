@@ -7,12 +7,17 @@ int WINAPI WinMain(
 	_In_ LPSTR lpCmdLine,
 	_In_ int nShowCmd)
 {
+	ChangeWindowMode(TRUE);               //非全画面にセット
+	SetGraphMode(640, 480, 32);           //画面サイズ指定
+	SetOutApplicationLogValidFlag(FALSE); //Log.txtを生成しないように設定
+
 	if (DxLib_Init() == -1) // ＤＸライブラリ初期化処理
 	{
 		return -1;			// エラーが起きたら直ちに終了
 	}
 
-	DrawPixel(320, 240, GetColor(255, 255, 255));	// 点を打つ
+	// 画面に絵を表示
+	LoadGraphScreen(0, 0, "assets/test1.bmp", FALSE);
 
 	WaitKey();				// キー入力待ち
 

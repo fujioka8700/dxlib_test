@@ -7,12 +7,12 @@ int WINAPI WinMain(
 	_In_ LPSTR lpCmdLine,
 	_In_ int nShowCmd)
 {
-	int BallX, BallY, BallGraph;
-	int SikakuX, SikakuY, SikakuMuki, SikakuGraph;
+#ifndef _DEBUG
+	SetOutApplicationLogValidFlag(FALSE); //Log.txtを生成しないように設定
+#endif // !_DEBUG
 
 	ChangeWindowMode(TRUE);               //非全画面にセット
 	SetGraphMode(640, 480, 16);           //画面サイズ指定
-	SetOutApplicationLogValidFlag(FALSE); //Log.txtを生成しないように設定
 
 	if (DxLib_Init() == -1) // ＤＸライブラリ初期化処理
 	{
@@ -24,6 +24,9 @@ int WINAPI WinMain(
 
 	// グラフィックの描画先を裏画面にセット
 	SetDrawScreen(DX_SCREEN_BACK);
+
+	int BallX, BallY, BallGraph;
+	int SikakuX, SikakuY, SikakuMuki, SikakuGraph;
 
 	// ボール君のグラフィックをメモリにロード＆表示座標をセット
 	BallGraph = LoadGraph("Ball.png");

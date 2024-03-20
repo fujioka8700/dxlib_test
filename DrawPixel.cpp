@@ -19,6 +19,9 @@ int WINAPI WinMain(
 		return -1;			// エラーが起きたら直ちに終了
 	}
 
+	// 背景色を青色に変更
+	SetBackgroundColor(0, 0, 255);
+
 	// グラフィックの描画先を裏画面にセット
 	SetDrawScreen(DX_SCREEN_BACK);
 
@@ -109,7 +112,6 @@ int WINAPI WinMain(
 
 		// 裏画面の内容を表画面にコピーする
 		ScreenFlip();
-
 
 		// Windows 特有の面倒な処理をＤＸライブラリにやらせる
 		// -1 が返ってきたらループを抜ける

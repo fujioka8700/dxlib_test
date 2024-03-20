@@ -53,6 +53,20 @@ int WINAPI WinMain(
 			// →キーを押していたらボール君を右に移動させる
 			if (CheckHitKey(KEY_INPUT_RIGHT) == 1) BallX += 3;
 
+			// パッドの入力
+			int key = GetJoypadInputState(DX_INPUT_PAD1); //パッド１の入力
+			if (key & PAD_INPUT_UP)    BallY -= 3; //上が押されている
+			if (key & PAD_INPUT_DOWN)  BallY += 3; //下が押されている
+			if (key & PAD_INPUT_LEFT)  BallX -= 3; //左が押されている
+			if (key & PAD_INPUT_RIGHT) BallX += 3; //右が押されている
+
+			// 入力されているパッドのボタン表示
+			for (int i = 0; i < 28; i++) { //ボタン28個分ループ
+				if (key & (1 << i)) {      //ボタンiの入力フラグが立っていたら
+					DrawFormatString(0, i * 15, GetColor(255, 255, 255), "%dのキーが押されています", i);
+				}
+			}
+
 			// ボール君が画面左端からはみ出そうになっていたら画面内の座標に戻してあげる
 			if (BallX < 0) BallX = 0;
 
@@ -68,7 +82,6 @@ int WINAPI WinMain(
 			// ボール君を描画
 			DrawGraph(BallX, BallY, BallGraph, FALSE);
 		}
-
 
 		// 四角君の移動ルーチン
 		{

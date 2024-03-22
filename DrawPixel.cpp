@@ -33,6 +33,9 @@ int WINAPI WinMain(
 	int ShotX[SHOT], ShotY[SHOT], ShotFlag[SHOT], ShotGraph;
 	int SikakuW, SikakuH, ShotW, ShotH;
 	int ShotBFlag;
+	int ETamaX, ETamaY, ETamaFlag;
+	int ETamaW, ETamaH, ETamaGraph;
+	int ETamaCounter;
 	int WindowSizeX, WindowSizeY;
 
 	// ボール君のグラフィックをメモリにロード＆表示座標をセット
@@ -54,6 +57,18 @@ int WINAPI WinMain(
 
 	// 四角君の移動方向をセット
 	SikakuMuki = 1;
+
+	// 敵の弾のグラフィックをロード
+	ETamaGraph = LoadGraph("EShot.png");
+
+	// 敵の弾のグラフィックのサイズを得る
+	GetGraphSize(ETamaGraph, &ETamaW, &ETamaH);
+
+	// 敵の弾が飛んでいるかどうかを保持する変数に『飛んでいない』を表す０を代入
+	ETamaFlag = 0;
+
+	// 敵が弾を撃つタイミングを取るための計測用変数に０を代入
+	ETamaCounter = 0;
 
 	// 弾のグラフィックをメモリにロード
 	ShotGraph = LoadGraph("Shot.png");
@@ -86,14 +101,13 @@ int WINAPI WinMain(
 
 		// 変数を表示する
 #ifdef _DEBUG
-		//DrawFormatString(0, WindowSizeY - 15, GetColor(255, 255, 255), "%d", SikakuH);
-		DrawFormatString(0,  0, GetColor(255, 255, 255), "ShotFlag[0] : %d", ShotFlag[0]);
-		DrawFormatString(0, 15, GetColor(255, 255, 255), "ShotFlag[1] : %d", ShotFlag[1]);
-		DrawFormatString(0, 30, GetColor(255, 255, 255), "ShotX[0] : %d", ShotX[0]);
-		DrawFormatString(0, 45, GetColor(255, 255, 255), "ShotY[0] : %d", ShotY[0]);
-		DrawFormatString(0, 60, GetColor(255, 255, 255), "ShotBFlag : %d", ShotBFlag);
-		DrawFormatString(0, 75, GetColor(255, 255, 255), "SikakuDamageFlag : %d", SikakuDamageFlag);
-		DrawFormatString(0, 90, GetColor(255, 255, 255), "SikakuDamageCounter : %d", SikakuDamageCounter);
+		DrawFormatString(0,  0, GetColor(255, 255, 255), "ETamaFlag : %d", ETamaFlag);
+		DrawFormatString(0, 15, GetColor(255, 255, 255), "ETamaCounter : %d", ETamaCounter);
+		//DrawFormatString(0, 30, GetColor(255, 255, 255), "ShotX[0] : %d", ShotX[0]);
+		//DrawFormatString(0, 45, GetColor(255, 255, 255), "ShotY[0] : %d", ShotY[0]);
+		//DrawFormatString(0, 60, GetColor(255, 255, 255), "ShotBFlag : %d", ShotBFlag);
+		//DrawFormatString(0, 75, GetColor(255, 255, 255), "SikakuDamageFlag : %d", SikakuDamageFlag);
+		//DrawFormatString(0, 90, GetColor(255, 255, 255), "SikakuDamageCounter : %d", SikakuDamageCounter);
 #endif // _DEBUG
 
 		// ボール君の操作ルーチン
@@ -233,7 +247,41 @@ int WINAPI WinMain(
 				// 四角君を描画
 				DrawGraph(SikakuX, SikakuY, SikakuGraph, FALSE);
 
+				// 弾を撃つタイミングを計測するためのカウンターに１を足す
+				ETamaCounter++;
+
+				// もしカウンター変数が６０だった場合は弾を撃つ処理を行う
+				if (ETamaCounter == 60)
+				{
+					// もし既に弾が『飛んでいない』状態だった場合のみ発射処理を行う
+					if (ETamaFlag == 0)
+					{
+						// 弾の発射位置を設定する
+						ETamaX = SikakuX + SikakuW / 2 - ETamaW / 2;
+						ETamaY = SikakuY + SikakuH / 2 - ETamaH / 2;
+
+						// 弾の状態を保持する変数に『飛んでいる』を示す１を代入する
+						ETamaFlag = 1;
+					}
+
+					// 弾を打つタイミングを計測するための変数に０を代入
+					ETamaCounter = 0;
+				}
 			}
+		}
+
+		// 敵の弾の状態が『飛んでいる』場合のみ弾の移動処理を行う
+		if (ETamaFlag == 1)
+		{
+			// 少し下にずらす
+			ETamaY += 8;
+
+			// もし弾が画面下端からはみ出てしまった場合は弾の状態を『飛んでいない』
+			// を表す０にする
+			if (ETamaY > 480) ETamaFlag = 0;
+
+			// 画面に描画する( ETamaGraph : 敵の弾のグラフィックのハンドル )
+			DrawGraph(ETamaX, ETamaY, ETamaGraph, FALSE);
 		}
 
 		// 弾と敵の当たり判定、弾の数だけ繰り返す

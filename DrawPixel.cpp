@@ -30,6 +30,7 @@ int WINAPI WinMain(
 	int BallX, BallY, BallGraph;
 	int SikakuX, SikakuY, SikakuMuki, SikakuGraph;
 	int ShotX[SHOT], ShotY[SHOT], ShotFlag[SHOT], ShotGraph;
+	int ShotBFlag;
 	int WindowSizeX, WindowSizeY;
 
 	// ボール君のグラフィックをメモリにロード＆表示座標をセット
@@ -54,6 +55,9 @@ int WINAPI WinMain(
 		ShotY[i] = 0;
 	}
 
+	// ショットボタンが前のフレームで押されたかどうかを保存する変数に０(押されいない)を代入
+	ShotBFlag = 0;
+
 	// ウィンドウサイズを取得する
 	GetWindowSize(&WindowSizeX, &WindowSizeY);
 
@@ -69,6 +73,7 @@ int WINAPI WinMain(
 		DrawFormatString(0, 15, GetColor(255, 255, 255), "ShotFlag[1] : %d", ShotFlag[1]);
 		DrawFormatString(0, 30, GetColor(255, 255, 255), "ShotX[0] : %d", ShotX[0]);
 		DrawFormatString(0, 45, GetColor(255, 255, 255), "ShotY[0] : %d", ShotY[0]);
+		DrawFormatString(0, 60, GetColor(255, 255, 255), "ShotBFlag : %d", ShotBFlag);
 #endif // _DEBUG
 
 		// ボール君の操作ルーチン
@@ -91,28 +96,41 @@ int WINAPI WinMain(
 			// ボタン１を押した場合は処理を分岐
 			if (key & PAD_INPUT_1)
 			{
-				// 弾iが画面上にでていない場合はその弾を画面に出す
-				for (int i = 0; i < SHOT; i++)
+				// 前フレームでショットボタンを押したかが保存されている変数が０だったら弾を発射
+				if (ShotBFlag == 0)
 				{
-					if (ShotFlag[i] == 0)
+					// 弾iが画面上にでていない場合はその弾を画面に出す
+					for (int i = 0; i < SHOT; i++)
 					{
-						int Bw, Bh, Sw, Sh;
+						if (ShotFlag[i] == 0)
+						{
+							int Bw, Bh, Sw, Sh;
 
-						// ボール君と弾の画像のサイズを得る
-						GetGraphSize(BallGraph, &Bw, &Bh);
-						GetGraphSize(ShotGraph, &Sw, &Sh);
+							// ボール君と弾の画像のサイズを得る
+							GetGraphSize(BallGraph, &Bw, &Bh);
+							GetGraphSize(ShotGraph, &Sw, &Sh);
 
-						// 弾の位置をセット、位置はボール君の中心にする
-						ShotX[i] = (Bw - Sw) / 2 + BallX;
-						ShotY[i] = (Bh - Sh) / 2 + BallY;
+							// 弾の位置をセット、位置はボール君の中心にする
+							ShotX[i] = (Bw - Sw) / 2 + BallX;
+							ShotY[i] = (Bh - Sh) / 2 + BallY;
 
-						// 弾は現時点を持って存在するので、存在状態を保持する変数に１を代入する
-						ShotFlag[i] = 1;
+							// 弾は現時点を持って存在するので、存在状態を保持する変数に１を代入する
+							ShotFlag[i] = 1;
 
-						// 一つ弾を出したので弾を出すループから抜けます
-						break;
+							// 一つ弾を出したので弾を出すループから抜けます
+							break;
+						}
 					}
 				}
+
+				// 前フレームでショットボタンを押されていたかを保存する変数に１(おされていた)を代入
+				ShotBFlag = 1;
+			}
+			else
+			{
+				// ショットボタンが押されていなかった場合は
+				// 前フレームでショットボタンが押されていたかを保存する変数に０(おされていない)を代入
+				ShotBFlag = 0;
 			}
 
 			// ボール君が画面左端からはみ出そうになっていたら画面内の座標に戻してあげる

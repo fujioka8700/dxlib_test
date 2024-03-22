@@ -27,7 +27,8 @@ int WINAPI WinMain(
 
 	int BallX, BallY, BallGraph;
 	int SikakuX, SikakuY, SikakuMuki, SikakuGraph;
-	int ShotX, ShotY, ShotFlag, ShotGraph;
+	int Shot1X, Shot1Y, Shot1Flag, ShotGraph;
+	int Shot2X, Shot2Y, Shot2Flag;
 	int WindowSizeX, WindowSizeY;
 
 	// ボール君のグラフィックをメモリにロード＆表示座標をセット
@@ -45,10 +46,11 @@ int WINAPI WinMain(
 	ShotGraph = LoadGraph("Shot.png");
 
 	// 弾が画面上に存在しているか保持する変数に『存在していない』を意味する０を代入しておく
-	ShotFlag = 0;
+	Shot1Flag = 0;
+	Shot2Flag = 0;
 
 	// 弾の位置
-	ShotX = 0; ShotY = 0;
+	Shot1X = 0; Shot1Y = 0;
 
 	// ウィンドウサイズを取得する
 	GetWindowSize(&WindowSizeX, &WindowSizeY);
@@ -61,9 +63,10 @@ int WINAPI WinMain(
 
 		// 変数を表示する
 #ifdef _DEBUG
-		DrawFormatString(0, 0, GetColor(255, 255, 255), "ShotFlag : %d", ShotFlag);
-		DrawFormatString(0, 15, GetColor(255, 255, 255), "ShotX : %d", ShotX);
-		DrawFormatString(0, 30, GetColor(255, 255, 255), "ShotY : %d", ShotY);
+		DrawFormatString(0,  0, GetColor(255, 255, 255), "Shot1Flag : %d", Shot1Flag);
+		DrawFormatString(0, 15, GetColor(255, 255, 255), "Shot2Flag : %d", Shot2Flag);
+		DrawFormatString(0, 30, GetColor(255, 255, 255), "Shot1X : %d", Shot1X);
+		DrawFormatString(0, 45, GetColor(255, 255, 255), "Shot1Y : %d", Shot1Y);
 #endif // _DEBUG
 
 		// ボール君の操作ルーチン
@@ -84,20 +87,39 @@ int WINAPI WinMain(
 #endif // _DEBUG
 
 			// スペースキーを押していて、且弾が撃ち出されていなかったら弾を発射する
-			if ((key & PAD_INPUT_1) && ShotFlag == 0)
+			if (key & PAD_INPUT_1)
 			{
-				int Bw, Bh, Sw, Sh;
+				if (Shot1Flag == 0)
+				{
+					int Bw, Bh, Sw, Sh;
 
-				// ボール君と弾の画像のサイズを得る
-				GetGraphSize(BallGraph, &Bw, &Bh);
-				GetGraphSize(ShotGraph, &Sw, &Sh);
+					// ボール君と弾の画像のサイズを得る
+					GetGraphSize(BallGraph, &Bw, &Bh);
+					GetGraphSize(ShotGraph, &Sw, &Sh);
 
-				// 弾の位置をセット、位置はボール君の中心にする
-				ShotX = (Bw - Sw) / 2 + BallX;
-				ShotY = (Bh - Sh) / 2 + BallY;
+					// 弾の位置をセット、位置はボール君の中心にする
+					Shot1X = (Bw - Sw) / 2 + BallX;
+					Shot1Y = (Bh - Sh) / 2 + BallY;
 
-				// 弾は現時点を持って存在するので、存在状態を保持する変数に１を代入する
-				ShotFlag = 1;
+					// 弾は現時点を持って存在するので、存在状態を保持する変数に１を代入する
+					Shot1Flag = 1;
+				}
+				else if (Shot2Flag == 0)
+				{
+					// 弾２が画面に存在していない場合は弾２を出す
+					int Bw, Bh, Sw, Sh;
+
+					// ボール君と弾の画像のサイズを得る
+					GetGraphSize(BallGraph, &Bw, &Bh);
+					GetGraphSize(ShotGraph, &Sw, &Sh);
+
+					// 弾２の位置をセット、位置はボール君の中心にする
+					Shot2X = (Bw - Sw) / 2 + BallX;
+					Shot2Y = (Bh - Sh) / 2 + BallY;
+
+					// 弾２は現時点を持って存在するので、存在状態を保持する変数に１を代入する
+					Shot2Flag = 1;
+				}
 			}
 
 			// ボール君が画面左端からはみ出そうになっていたら画面内の座標に戻してあげる
@@ -117,19 +139,35 @@ int WINAPI WinMain(
 		}
 
 		// 自機の弾の移動ルーチン( 存在状態を保持している変数の内容が１(存在する)の場合のみ行う )
-		if (ShotFlag == 1)
+		if (Shot1Flag == 1)
 		{
 			// 弾を１６ドット上に移動させる
-			ShotY -= 16;
+			Shot1Y -= 16;
 
 			// 画面外に出てしまった場合は存在状態を保持している変数に０(存在しない)を代入する
-			if (ShotY < -80)
+			if (Shot1Y < -80)
 			{
-				ShotFlag = 0;
+				Shot1Flag = 0;
 			}
 
 			// 画面に弾を描画する
-			DrawGraph(ShotX, ShotY, ShotGraph, FALSE);
+			DrawGraph(Shot1X, Shot1Y, ShotGraph, FALSE);
+		}
+
+		// 自機の弾２の移動ルーチン( 存在状態を保持している変数の内容が１(存在する)の場合のみ行う )
+		if (Shot2Flag == 1)
+		{
+			// 弾２を１６ドット上に移動させる
+			Shot2Y -= 16;
+
+			// 画面外に出てしまった場合は存在状態を保持している変数に０(存在しない)を代入する
+			if (Shot2Y < -80)
+			{
+				Shot2Flag = 0;
+			}
+
+			// 画面に弾２を描画する
+			DrawGraph(Shot2X, Shot2Y, ShotGraph, FALSE);
 		}
 
 		// 四角君の移動ルーチン

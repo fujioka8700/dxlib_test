@@ -30,6 +30,7 @@ int WINAPI WinMain(
 	int BallX, BallY, BallGraph;
 	int SikakuX, SikakuY, SikakuMuki, SikakuGraph;
 	int ShotX[SHOT], ShotY[SHOT], ShotFlag[SHOT], ShotGraph;
+	int SikakuW, SikakuH, ShotW, ShotH;
 	int ShotBFlag;
 	int WindowSizeX, WindowSizeY;
 
@@ -46,6 +47,12 @@ int WINAPI WinMain(
 
 	// 弾のグラフィックをメモリにロード
 	ShotGraph = LoadGraph("Shot.png");
+
+	// 弾のグラフィックのサイズを得る
+	GetGraphSize(ShotGraph, &ShotW, &ShotH);
+
+	// 四角君のグラフィックのサイズを得る
+	GetGraphSize(SikakuGraph, &SikakuW, &SikakuH);
 
 	// 弾１・２が画面上に存在しているか保持する変数に『存在していない』を意味する０を代入しておく
 	for (int i = 0; i < SHOT; i++)
@@ -74,6 +81,7 @@ int WINAPI WinMain(
 		DrawFormatString(0, 30, GetColor(255, 255, 255), "ShotX[0] : %d", ShotX[0]);
 		DrawFormatString(0, 45, GetColor(255, 255, 255), "ShotY[0] : %d", ShotY[0]);
 		DrawFormatString(0, 60, GetColor(255, 255, 255), "ShotBFlag : %d", ShotBFlag);
+		//DrawFormatString(0, 75, GetColor(255, 255, 255), "%d", SikakuH);
 #endif // _DEBUG
 
 		// ボール君の操作ルーチン
@@ -191,6 +199,24 @@ int WINAPI WinMain(
 
 			// 四角君を描画
 			DrawGraph(SikakuX, SikakuY, SikakuGraph, FALSE);
+		}
+
+		// 弾と敵の当たり判定、弾の数だけ繰り返す
+		for (int i = 0; i < SHOT; i++)
+		{
+			// 弾iが存在している場合のみ次の処理に映る
+			if (ShotFlag[i] == 1)
+			{
+				// 四角君との当たり判定
+				if (((ShotX[i] > SikakuX && ShotX[i] < SikakuX + SikakuW) ||
+					(SikakuX > ShotX[i] && SikakuX < ShotX[i] + ShotW)) &&
+					((ShotY[i] > SikakuY && ShotY[i] < SikakuY + SikakuH) ||
+						(SikakuY > ShotY[i] && SikakuY < ShotY[i] + ShotH)))
+				{
+					// 接触している場合は当たった弾の存在を消す
+					ShotFlag[i] = 0;
+				}
+			}
 		}
 
 		// 裏画面の内容を表画面にコピーする

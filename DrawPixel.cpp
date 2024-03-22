@@ -29,6 +29,7 @@ int WINAPI WinMain(
 
 	int BallX, BallY, BallGraph;
 	int SikakuX, SikakuY, SikakuMuki, SikakuGraph;
+	int SikakuDamageFlag, SikakuDamageCounter, SikakuDamageGraph;
 	int ShotX[SHOT], ShotY[SHOT], ShotFlag[SHOT], ShotGraph;
 	int SikakuW, SikakuH, ShotW, ShotH;
 	int ShotBFlag;
@@ -41,6 +42,15 @@ int WINAPI WinMain(
 	// 四角君のグラフィックをメモリにロード＆表示座標をセット
 	SikakuGraph = LoadGraph("Sikaku.png");
 	SikakuX = 0; SikakuY = 50;
+
+	// 四角君のダメージ時のグラフィックをメモリにロード
+	SikakuDamageGraph = LoadGraph("SikakuDam.png");
+
+	// 四角君が顔を歪めているかどうかの変数に『歪めていない』を表す０を代入
+	SikakuDamageFlag = 0;
+
+	// 四角君の顔を歪めている時間を測るカウンタ変数に０を代入
+	SikakuDamageCounter = 0;
 
 	// 四角君の移動方向をセット
 	SikakuMuki = 1;
@@ -76,12 +86,14 @@ int WINAPI WinMain(
 
 		// 変数を表示する
 #ifdef _DEBUG
+		//DrawFormatString(0, WindowSizeY - 15, GetColor(255, 255, 255), "%d", SikakuH);
 		DrawFormatString(0,  0, GetColor(255, 255, 255), "ShotFlag[0] : %d", ShotFlag[0]);
 		DrawFormatString(0, 15, GetColor(255, 255, 255), "ShotFlag[1] : %d", ShotFlag[1]);
 		DrawFormatString(0, 30, GetColor(255, 255, 255), "ShotX[0] : %d", ShotX[0]);
 		DrawFormatString(0, 45, GetColor(255, 255, 255), "ShotY[0] : %d", ShotY[0]);
 		DrawFormatString(0, 60, GetColor(255, 255, 255), "ShotBFlag : %d", ShotBFlag);
-		//DrawFormatString(0, 75, GetColor(255, 255, 255), "%d", SikakuH);
+		DrawFormatString(0, 75, GetColor(255, 255, 255), "SikakuDamageFlag : %d", SikakuDamageFlag);
+		DrawFormatString(0, 90, GetColor(255, 255, 255), "SikakuDamageCounter : %d", SikakuDamageCounter);
 #endif // _DEBUG
 
 		// ボール君の操作ルーチン
@@ -179,26 +191,49 @@ int WINAPI WinMain(
 
 		// 四角君の移動ルーチン
 		{
-			// 四角君の座標を移動している方向に移動する
-			if (SikakuMuki == 1) SikakuX += 3;
-			if (SikakuMuki == 0) SikakuX -= 3;
-
-			// 四角君が画面右端からでそうになっていたら画面内の座標に戻してあげ、移動する方向も反転する
-			if (SikakuX > 576)
+			// 顔を歪めているかどうかで処理を分岐
+			if (SikakuDamageFlag == 1)
 			{
-				SikakuX = 576;
-				SikakuMuki = 0;
-			}
+				// 顔を歪めている場合はダメージ時のグラフィックを描画する
+				DrawGraph(SikakuX, SikakuY, SikakuDamageGraph, FALSE);
 
-			// 四角君が画面左端からでそうになっていたら画面内の座標に戻してあげ、移動する方向も反転する
-			if (SikakuX < 0)
+				// 顔を歪めている時間を測るカウンターに１を加算する
+				SikakuDamageCounter++;
+
+				// もし顔を歪め初めて ３０ フレーム経過していたら顔の歪んだ状態から
+				// 元に戻してあげる
+				if (SikakuDamageCounter == 30)
+				{
+					// 『歪んでいない』を表す０を代入
+					SikakuDamageFlag = 0;
+				}
+			}
+			else
 			{
-				SikakuX = 0;
-				SikakuMuki = 1;
-			}
+				// 歪んでいない場合は今まで通りの処理
 
-			// 四角君を描画
-			DrawGraph(SikakuX, SikakuY, SikakuGraph, FALSE);
+				// 四角君の座標を移動している方向に移動する
+				if (SikakuMuki == 1) SikakuX += 3;
+				if (SikakuMuki == 0) SikakuX -= 3;
+
+				// 四角君が画面右端からでそうになっていたら画面内の座標に戻してあげ、移動する方向も反転する
+				if (SikakuX > 576)
+				{
+					SikakuX = 576;
+					SikakuMuki = 0;
+				}
+
+				// 四角君が画面左端からでそうになっていたら画面内の座標に戻してあげ、移動する方向も反転する
+				if (SikakuX < 0)
+				{
+					SikakuX = 0;
+					SikakuMuki = 1;
+				}
+
+				// 四角君を描画
+				DrawGraph(SikakuX, SikakuY, SikakuGraph, FALSE);
+
+			}
 		}
 
 		// 弾と敵の当たり判定、弾の数だけ繰り返す
@@ -215,6 +250,12 @@ int WINAPI WinMain(
 				{
 					// 接触している場合は当たった弾の存在を消す
 					ShotFlag[i] = 0;
+
+					// 四角君の顔を歪めているかどうかを保持する変数に『歪めている』を表す１を代入
+					SikakuDamageFlag = 1;
+
+					// 四角君の顔を歪めている時間を測るカウンタ変数に０を代入
+					SikakuDamageCounter = 0;
 				}
 			}
 		}

@@ -1,5 +1,7 @@
 #include "DxLib.h"
 
+#define SHOT 2
+
 // プログラムは WinMain から始まります
 int WINAPI WinMain(
 	_In_ HINSTANCE hInstance,
@@ -27,8 +29,7 @@ int WINAPI WinMain(
 
 	int BallX, BallY, BallGraph;
 	int SikakuX, SikakuY, SikakuMuki, SikakuGraph;
-	int Shot1X, Shot1Y, Shot1Flag, ShotGraph;
-	int Shot2X, Shot2Y, Shot2Flag;
+	int ShotX[SHOT], ShotY[SHOT], ShotFlag[SHOT], ShotGraph;
 	int WindowSizeX, WindowSizeY;
 
 	// ボール君のグラフィックをメモリにロード＆表示座標をセット
@@ -45,12 +46,13 @@ int WINAPI WinMain(
 	// 弾のグラフィックをメモリにロード
 	ShotGraph = LoadGraph("Shot.png");
 
-	// 弾が画面上に存在しているか保持する変数に『存在していない』を意味する０を代入しておく
-	Shot1Flag = 0;
-	Shot2Flag = 0;
-
-	// 弾の位置
-	Shot1X = 0; Shot1Y = 0;
+	// 弾１・２が画面上に存在しているか保持する変数に『存在していない』を意味する０を代入しておく
+	for (int i = 0; i < SHOT; i++)
+	{
+		ShotFlag[i] = 0;
+		ShotX[i] = 0;
+		ShotY[i] = 0;
+	}
 
 	// ウィンドウサイズを取得する
 	GetWindowSize(&WindowSizeX, &WindowSizeY);
@@ -63,10 +65,10 @@ int WINAPI WinMain(
 
 		// 変数を表示する
 #ifdef _DEBUG
-		DrawFormatString(0,  0, GetColor(255, 255, 255), "Shot1Flag : %d", Shot1Flag);
-		DrawFormatString(0, 15, GetColor(255, 255, 255), "Shot2Flag : %d", Shot2Flag);
-		DrawFormatString(0, 30, GetColor(255, 255, 255), "Shot1X : %d", Shot1X);
-		DrawFormatString(0, 45, GetColor(255, 255, 255), "Shot1Y : %d", Shot1Y);
+		DrawFormatString(0,  0, GetColor(255, 255, 255), "ShotFlag[0] : %d", ShotFlag[0]);
+		DrawFormatString(0, 15, GetColor(255, 255, 255), "ShotFlag[1] : %d", ShotFlag[1]);
+		DrawFormatString(0, 30, GetColor(255, 255, 255), "ShotX[0] : %d", ShotX[0]);
+		DrawFormatString(0, 45, GetColor(255, 255, 255), "ShotY[0] : %d", ShotY[0]);
 #endif // _DEBUG
 
 		// ボール君の操作ルーチン
@@ -86,39 +88,30 @@ int WINAPI WinMain(
 			}
 #endif // _DEBUG
 
-			// スペースキーを押していて、且弾が撃ち出されていなかったら弾を発射する
+			// ボタン１を押した場合は処理を分岐
 			if (key & PAD_INPUT_1)
 			{
-				if (Shot1Flag == 0)
+				// 弾iが画面上にでていない場合はその弾を画面に出す
+				for (int i = 0; i < SHOT; i++)
 				{
-					int Bw, Bh, Sw, Sh;
+					if (ShotFlag[i] == 0)
+					{
+						int Bw, Bh, Sw, Sh;
 
-					// ボール君と弾の画像のサイズを得る
-					GetGraphSize(BallGraph, &Bw, &Bh);
-					GetGraphSize(ShotGraph, &Sw, &Sh);
+						// ボール君と弾の画像のサイズを得る
+						GetGraphSize(BallGraph, &Bw, &Bh);
+						GetGraphSize(ShotGraph, &Sw, &Sh);
 
-					// 弾の位置をセット、位置はボール君の中心にする
-					Shot1X = (Bw - Sw) / 2 + BallX;
-					Shot1Y = (Bh - Sh) / 2 + BallY;
+						// 弾の位置をセット、位置はボール君の中心にする
+						ShotX[i] = (Bw - Sw) / 2 + BallX;
+						ShotY[i] = (Bh - Sh) / 2 + BallY;
 
-					// 弾は現時点を持って存在するので、存在状態を保持する変数に１を代入する
-					Shot1Flag = 1;
-				}
-				else if (Shot2Flag == 0)
-				{
-					// 弾２が画面に存在していない場合は弾２を出す
-					int Bw, Bh, Sw, Sh;
+						// 弾は現時点を持って存在するので、存在状態を保持する変数に１を代入する
+						ShotFlag[i] = 1;
 
-					// ボール君と弾の画像のサイズを得る
-					GetGraphSize(BallGraph, &Bw, &Bh);
-					GetGraphSize(ShotGraph, &Sw, &Sh);
-
-					// 弾２の位置をセット、位置はボール君の中心にする
-					Shot2X = (Bw - Sw) / 2 + BallX;
-					Shot2Y = (Bh - Sh) / 2 + BallY;
-
-					// 弾２は現時点を持って存在するので、存在状態を保持する変数に１を代入する
-					Shot2Flag = 1;
+						// 一つ弾を出したので弾を出すループから抜けます
+						break;
+					}
 				}
 			}
 
@@ -138,36 +131,24 @@ int WINAPI WinMain(
 			DrawGraph(BallX, BallY, BallGraph, FALSE);
 		}
 
-		// 自機の弾の移動ルーチン( 存在状態を保持している変数の内容が１(存在する)の場合のみ行う )
-		if (Shot1Flag == 1)
+		// 弾の数だけ弾を動かす処理を繰り返す
+		for (int i = 0; i < SHOT; i++)
 		{
-			// 弾を１６ドット上に移動させる
-			Shot1Y -= 16;
-
-			// 画面外に出てしまった場合は存在状態を保持している変数に０(存在しない)を代入する
-			if (Shot1Y < -80)
+			// 自機の弾の移動ルーチン( 存在状態を保持している変数の内容が１(存在する)の場合のみ行う )
+			if (ShotFlag[i] == 1)
 			{
-				Shot1Flag = 0;
+				// 弾を１６ドット上に移動させる
+				ShotY[i] -= 16;
+
+				// 画面外に出てしまった場合は存在状態を保持している変数に０(存在しない)を代入する
+				if (ShotY[i] < -80)
+				{
+					ShotFlag[i] = 0;
+				}
+
+				// 画面に弾を描画する
+				DrawGraph(ShotX[i], ShotY[i], ShotGraph, FALSE);
 			}
-
-			// 画面に弾を描画する
-			DrawGraph(Shot1X, Shot1Y, ShotGraph, FALSE);
-		}
-
-		// 自機の弾２の移動ルーチン( 存在状態を保持している変数の内容が１(存在する)の場合のみ行う )
-		if (Shot2Flag == 1)
-		{
-			// 弾２を１６ドット上に移動させる
-			Shot2Y -= 16;
-
-			// 画面外に出てしまった場合は存在状態を保持している変数に０(存在しない)を代入する
-			if (Shot2Y < -80)
-			{
-				Shot2Flag = 0;
-			}
-
-			// 画面に弾２を描画する
-			DrawGraph(Shot2X, Shot2Y, ShotGraph, FALSE);
 		}
 
 		// 四角君の移動ルーチン

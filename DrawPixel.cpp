@@ -1,4 +1,5 @@
 #include "DxLib.h"
+#include <math.h>
 
 #define SHOT 2
 
@@ -28,12 +29,15 @@ int WINAPI WinMain(
 	SetDrawScreen(DX_SCREEN_BACK);
 
 	int BallX, BallY, BallGraph;
+	int Bw, Bh, Sw, Sh;
 	int SikakuX, SikakuY, SikakuMuki, SikakuGraph;
 	int SikakuDamageFlag, SikakuDamageCounter, SikakuDamageGraph;
 	int ShotX[SHOT], ShotY[SHOT], ShotFlag[SHOT], ShotGraph;
 	int SikakuW, SikakuH, ShotW, ShotH;
 	int ShotBFlag;
-	int ETamaX, ETamaY, ETamaFlag;
+	double ETamaX, ETamaY;
+	int ETamaFlag;
+	double ETamaSx, ETamaSy;
 	int ETamaW, ETamaH, ETamaGraph;
 	int ETamaCounter;
 	int WindowSizeX, WindowSizeY;
@@ -90,6 +94,10 @@ int WINAPI WinMain(
 	// ショットボタンが前のフレームで押されたかどうかを保存する変数に０(押されいない)を代入
 	ShotBFlag = 0;
 
+	// ボール君と弾の画像のサイズを得る
+	GetGraphSize(BallGraph, &Bw, &Bh);
+	GetGraphSize(ShotGraph, &Sw, &Sh);
+
 	// ウィンドウサイズを取得する
 	GetWindowSize(&WindowSizeX, &WindowSizeY);
 
@@ -138,12 +146,6 @@ int WINAPI WinMain(
 					{
 						if (ShotFlag[i] == 0)
 						{
-							int Bw, Bh, Sw, Sh;
-
-							// ボール君と弾の画像のサイズを得る
-							GetGraphSize(BallGraph, &Bw, &Bh);
-							GetGraphSize(ShotGraph, &Sw, &Sh);
-
 							// 弾の位置をセット、位置はボール君の中心にする
 							ShotX[i] = (Bw - Sw) / 2 + BallX;
 							ShotY[i] = (Bh - Sh) / 2 + BallY;
@@ -260,6 +262,28 @@ int WINAPI WinMain(
 						ETamaX = SikakuX + SikakuW / 2 - ETamaW / 2;
 						ETamaY = SikakuY + SikakuH / 2 - ETamaH / 2;
 
+						// 弾の移動速度を設定する
+						{
+							double sb, sbx, sby, bx, by, sx, sy;
+
+							sx = ETamaX + ETamaW / 2;
+							sy = ETamaY + ETamaH / 2;
+
+							bx = BallX + Bw / 2;
+							by = BallY + Bh / 2;
+
+							sbx = bx - sx;
+							sby = by - sy;
+
+							// 平方根を求めるのに標準関数の sqrt を使う、
+							// これを使うには math.h をインクルードする必要がある
+							sb = sqrt(sbx * sbx + sby * sby);
+
+							// １フレーム当たり８ドット移動するようにする
+							ETamaSx = sbx / sb * 8;
+							ETamaSy = sby / sb * 8;
+						}
+
 						// 弾の状態を保持する変数に『飛んでいる』を示す１を代入する
 						ETamaFlag = 1;
 					}
@@ -273,15 +297,17 @@ int WINAPI WinMain(
 		// 敵の弾の状態が『飛んでいる』場合のみ弾の移動処理を行う
 		if (ETamaFlag == 1)
 		{
-			// 少し下にずらす
-			ETamaY += 8;
+			// 弾を移動させる
+			ETamaX += ETamaSx;
+			ETamaY += ETamaSy;
 
-			// もし弾が画面下端からはみ出てしまった場合は弾の状態を『飛んでいない』
+			// もし弾が画面からはみ出てしまった場合は弾の状態を『飛んでいない』
 			// を表す０にする
-			if (ETamaY > 480) ETamaFlag = 0;
+			if (ETamaY > 480 || ETamaY < 0 ||
+				ETamaX > 640 || ETamaX < 0) ETamaFlag = 0;
 
 			// 画面に描画する( ETamaGraph : 敵の弾のグラフィックのハンドル )
-			DrawGraph(ETamaX, ETamaY, ETamaGraph, FALSE);
+			DrawGraph((int)ETamaX, (int)ETamaY, ETamaGraph, FALSE);
 		}
 
 		// 弾と敵の当たり判定、弾の数だけ繰り返す

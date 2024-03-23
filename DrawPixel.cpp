@@ -28,18 +28,29 @@ int WINAPI WinMain(
 	// グラフィックの描画先を裏画面にセット
 	SetDrawScreen(DX_SCREEN_BACK);
 
-	int BallX, BallY, BallGraph;
-	int Bw, Bh, Sw, Sh;
-	int SikakuX, SikakuY, SikakuMuki, SikakuGraph;
-	int SikakuDamageFlag, SikakuDamageCounter, SikakuDamageGraph;
-	int ShotX[SHOT], ShotY[SHOT], ShotFlag[SHOT], ShotGraph;
-	int SikakuW, SikakuH, ShotW, ShotH;
+	// 味方のボール
+	int BallX, BallY, BallW, BallH;
+	int BallGraph;
+
+	// 味方のボールが打つ弾
+	int BallShotW, BallShotH;
+	int BallShotX[SHOT], BallShotY[SHOT], ShotFlag[SHOT], ShotGraph;
 	int ShotBFlag;
+
+	// 敵の四角
+	int SikakuX, SikakuY, SikakuW, SikakuH;
+	int SikakuMuki, SikakuGraph;
+	int SikakuShotW, SikakuShotH;
+	int SikakuDamageFlag, SikakuDamageCounter, SikakuDamageGraph;
+
+	// 敵の四角が打つ弾
 	double ETamaX, ETamaY;
-	int ETamaFlag;
 	double ETamaSx, ETamaSy;
 	int ETamaW, ETamaH, ETamaGraph;
+	int ETamaFlag;
 	int ETamaCounter;
+
+	// ウィンドウサイズ
 	int WindowSizeX, WindowSizeY;
 
 	// ボール君のグラフィックをメモリにロード＆表示座標をセット
@@ -78,7 +89,7 @@ int WINAPI WinMain(
 	ShotGraph = LoadGraph("Shot.png");
 
 	// 弾のグラフィックのサイズを得る
-	GetGraphSize(ShotGraph, &ShotW, &ShotH);
+	GetGraphSize(ShotGraph, &SikakuShotW, &SikakuShotH);
 
 	// 四角君のグラフィックのサイズを得る
 	GetGraphSize(SikakuGraph, &SikakuW, &SikakuH);
@@ -87,16 +98,16 @@ int WINAPI WinMain(
 	for (int i = 0; i < SHOT; i++)
 	{
 		ShotFlag[i] = 0;
-		ShotX[i] = 0;
-		ShotY[i] = 0;
+		BallShotX[i] = 0;
+		BallShotY[i] = 0;
 	}
 
 	// ショットボタンが前のフレームで押されたかどうかを保存する変数に０(押されいない)を代入
 	ShotBFlag = 0;
 
 	// ボール君と弾の画像のサイズを得る
-	GetGraphSize(BallGraph, &Bw, &Bh);
-	GetGraphSize(ShotGraph, &Sw, &Sh);
+	GetGraphSize(BallGraph, &BallW, &BallH);
+	GetGraphSize(ShotGraph, &BallShotW, &BallShotH);
 
 	// ウィンドウサイズを取得する
 	GetWindowSize(&WindowSizeX, &WindowSizeY);
@@ -147,8 +158,8 @@ int WINAPI WinMain(
 						if (ShotFlag[i] == 0)
 						{
 							// 弾の位置をセット、位置はボール君の中心にする
-							ShotX[i] = (Bw - Sw) / 2 + BallX;
-							ShotY[i] = (Bh - Sh) / 2 + BallY;
+							BallShotX[i] = (BallW - BallShotW) / 2 + BallX;
+							BallShotY[i] = (BallH - BallShotH) / 2 + BallY;
 
 							// 弾は現時点を持って存在するので、存在状態を保持する変数に１を代入する
 							ShotFlag[i] = 1;
@@ -192,16 +203,16 @@ int WINAPI WinMain(
 			if (ShotFlag[i] == 1)
 			{
 				// 弾を１６ドット上に移動させる
-				ShotY[i] -= 16;
+				BallShotY[i] -= 16;
 
 				// 画面外に出てしまった場合は存在状態を保持している変数に０(存在しない)を代入する
-				if (ShotY[i] < -80)
+				if (BallShotY[i] < -80)
 				{
 					ShotFlag[i] = 0;
 				}
 
 				// 画面に弾を描画する
-				DrawGraph(ShotX[i], ShotY[i], ShotGraph, FALSE);
+				DrawGraph(BallShotX[i], BallShotY[i], ShotGraph, FALSE);
 			}
 		}
 
@@ -269,8 +280,8 @@ int WINAPI WinMain(
 							sx = ETamaX + ETamaW / 2;
 							sy = ETamaY + ETamaH / 2;
 
-							bx = BallX + Bw / 2;
-							by = BallY + Bh / 2;
+							bx = BallX + BallW / 2;
+							by = BallY + BallH / 2;
 
 							sbx = bx - sx;
 							sby = by - sy;
@@ -317,10 +328,10 @@ int WINAPI WinMain(
 			if (ShotFlag[i] == 1)
 			{
 				// 四角君との当たり判定
-				if (((ShotX[i] > SikakuX && ShotX[i] < SikakuX + SikakuW) ||
-					(SikakuX > ShotX[i] && SikakuX < ShotX[i] + ShotW)) &&
-					((ShotY[i] > SikakuY && ShotY[i] < SikakuY + SikakuH) ||
-						(SikakuY > ShotY[i] && SikakuY < ShotY[i] + ShotH)))
+				if (((BallShotX[i] > SikakuX && BallShotX[i] < SikakuX + SikakuW) ||
+					(SikakuX > BallShotX[i] && SikakuX < BallShotX[i] + SikakuShotW)) &&
+					((BallShotY[i] > SikakuY && BallShotY[i] < SikakuY + SikakuH) ||
+						(SikakuY > BallShotY[i] && SikakuY < BallShotY[i] + SikakuShotH)))
 				{
 					// 接触している場合は当たった弾の存在を消す
 					ShotFlag[i] = 0;

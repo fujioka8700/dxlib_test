@@ -2,6 +2,8 @@
 #include <math.h>
 
 #define SHOT 2
+#define SIKAKULIFE 3
+#define BALLLIFE 3
 
 // プログラムは WinMain から始まります
 int WINAPI WinMain(
@@ -31,6 +33,8 @@ int WINAPI WinMain(
 	// 味方のボール
 	int BallX, BallY, BallW, BallH;
 	int BallGraph;
+	int BallDamageFlag, BallDamageCounter, BallDamageGraph;
+	int BallLife;
 
 	// 味方のボールが打つ弾
 	int BallShotW, BallShotH;
@@ -42,6 +46,7 @@ int WINAPI WinMain(
 	int SikakuMuki, SikakuGraph;
 	int SikakuShotW, SikakuShotH;
 	int SikakuDamageFlag, SikakuDamageCounter, SikakuDamageGraph;
+	int SikakuLife;
 
 	// 敵の四角が打つ弾
 	double ETamaX, ETamaY;
@@ -56,6 +61,18 @@ int WINAPI WinMain(
 	// ボール君のグラフィックをメモリにロード＆表示座標をセット
 	BallGraph = LoadGraph("Ball.png");
 	BallX = 288; BallY = 400;
+
+	// ボール君のダメージ時のグラフィックをメモリにロード
+	BallDamageGraph = LoadGraph("BallDam.png");
+
+	// ボール君の体力をセット
+	BallLife = BALLLIFE;
+
+	// ボール君が顔を歪めているかどうかの変数に『歪めていない』を表す０を代入
+	BallDamageFlag = 0;
+
+	// ボール君の顔を歪めている時間を測るカウンタ変数に０を代入
+	BallDamageCounter = 0;
 
 	// 四角君のグラフィックをメモリにロード＆表示座標をセット
 	SikakuGraph = LoadGraph("Sikaku.png");
@@ -72,6 +89,9 @@ int WINAPI WinMain(
 
 	// 四角君の移動方向をセット
 	SikakuMuki = 1;
+
+	// 四角君の体力をセット
+	SikakuLife = SIKAKULIFE;
 
 	// 敵の弾のグラフィックをロード
 	ETamaGraph = LoadGraph("EShot.png");
@@ -120,10 +140,10 @@ int WINAPI WinMain(
 
 		// 変数を表示する
 #ifdef _DEBUG
-		DrawFormatString(0,  0, GetColor(255, 255, 255), "ETamaFlag : %d", ETamaFlag);
-		DrawFormatString(0, 15, GetColor(255, 255, 255), "ETamaCounter : %d", ETamaCounter);
-		//DrawFormatString(0, 30, GetColor(255, 255, 255), "ShotX[0] : %d", ShotX[0]);
-		//DrawFormatString(0, 45, GetColor(255, 255, 255), "ShotY[0] : %d", ShotY[0]);
+		DrawFormatString(0,  0, GetColor(255, 255, 255), "BallLife : %d", BallLife);
+		DrawFormatString(0, 15, GetColor(255, 255, 255), "SikakuLife : %d", SikakuLife);
+		//DrawFormatString(0, 30, GetColor(255, 255, 255), "BallLife : %d", BallLife);
+		//DrawFormatString(0, 45, GetColor(255, 255, 255), "%d", BallDamageCounter);
 		//DrawFormatString(0, 60, GetColor(255, 255, 255), "ShotBFlag : %d", ShotBFlag);
 		//DrawFormatString(0, 75, GetColor(255, 255, 255), "SikakuDamageFlag : %d", SikakuDamageFlag);
 		//DrawFormatString(0, 90, GetColor(255, 255, 255), "SikakuDamageCounter : %d", SikakuDamageCounter);
@@ -131,69 +151,106 @@ int WINAPI WinMain(
 
 		// ボール君の操作ルーチン
 		{
-			int key = GetJoypadInputState(DX_INPUT_KEY_PAD1); // キー・パッド１の入力
-			if (key & PAD_INPUT_UP)    BallY -= 3; // 上が押されている
-			if (key & PAD_INPUT_DOWN)  BallY += 3; // 下が押されている
-			if (key & PAD_INPUT_LEFT)  BallX -= 3; // 左が押されている
-			if (key & PAD_INPUT_RIGHT) BallX += 3; // 右が押されている
-
-#ifdef _DEBUG
-			// 入力されているパッドのボタン表示
-			for (int i = 0; i < 28; i++) { // ボタン28個分ループ
-				if (key & (1 << i)) {      // ボタンiの入力フラグが立っていたら
-					DrawFormatString(0, (i * 15) + WindowSizeY / 2, GetColor(255, 255, 255), "%dのキーが押されています", i);
-				}
-			}
-#endif // _DEBUG
-
-			// ボタン１を押した場合は処理を分岐
-			if (key & PAD_INPUT_1)
+			// 顔を歪めているかどうかで処理を分岐
+			if (BallDamageFlag == 1)
 			{
-				// 前フレームでショットボタンを押したかが保存されている変数が０だったら弾を発射
-				if (ShotBFlag == 0)
+				// 顔を歪めている場合はダメージ時のグラフィックを描画する
+				DrawGraph(BallX, BallY, BallDamageGraph, FALSE);
+
+				if (BallLife > 0)
 				{
-					// 弾iが画面上にでていない場合はその弾を画面に出す
-					for (int i = 0; i < SHOT; i++)
+					// 四角君のライフが0以上の時は、
+					// 顔を歪めている時間を測るカウンターに１を加算する
+					BallDamageCounter++;
+				}
+
+				// もし顔を歪め初めて ３０ フレーム経過していたら顔の歪んだ状態から
+				// 元に戻してあげる
+				if (BallDamageCounter == 30)
+				{
+					// 四角君のライフが0になった時
+					if (BallLife == 0)
 					{
-						if (ShotFlag[i] == 0)
+						// ボール君から弾を発射しない
+						for (int i = 0; i < SHOT; i++)
 						{
-							// 弾の位置をセット、位置はボール君の中心にする
-							BallShotX[i] = (BallW - BallShotW) / 2 + BallX;
-							BallShotY[i] = (BallH - BallShotH) / 2 + BallY;
-
-							// 弾は現時点を持って存在するので、存在状態を保持する変数に１を代入する
-							ShotFlag[i] = 1;
-
-							// 一つ弾を出したので弾を出すループから抜けます
-							break;
+							ShotFlag[i] = 0;
 						}
 					}
-				}
 
-				// 前フレームでショットボタンを押されていたかを保存する変数に１(おされていた)を代入
-				ShotBFlag = 1;
+					// 『歪んでいない』を表す０を代入
+					BallDamageFlag = 0;
+
+					// ボール君の顔を歪めている時間を測るカウンタ変数に０を代入
+					BallDamageCounter = 0;
+				}
 			}
 			else
 			{
-				// ショットボタンが押されていなかった場合は
-				// 前フレームでショットボタンが押されていたかを保存する変数に０(おされていない)を代入
-				ShotBFlag = 0;
+				int key = GetJoypadInputState(DX_INPUT_KEY_PAD1); // キー・パッド１の入力
+				if (key & PAD_INPUT_UP)    BallY -= 3; // 上が押されている
+				if (key & PAD_INPUT_DOWN)  BallY += 3; // 下が押されている
+				if (key & PAD_INPUT_LEFT)  BallX -= 3; // 左が押されている
+				if (key & PAD_INPUT_RIGHT) BallX += 3; // 右が押されている
+
+#ifdef _DEBUG
+				// 入力されているパッドのボタン表示
+				for (int i = 0; i < 28; i++) { // ボタン28個分ループ
+					if (key & (1 << i)) {      // ボタンiの入力フラグが立っていたら
+						DrawFormatString(0, (i * 15) + WindowSizeY / 2, GetColor(255, 255, 255), "%dのキーが押されています", i);
+					}
+				}
+#endif // _DEBUG
+
+				// ボタン１を押した場合は処理を分岐
+				if (key & PAD_INPUT_1)
+				{
+					// 前フレームでショットボタンを押したかが保存されている変数が０だったら弾を発射
+					if (ShotBFlag == 0)
+					{
+						// 弾iが画面上にでていない場合はその弾を画面に出す
+						for (int i = 0; i < SHOT; i++)
+						{
+							if (ShotFlag[i] == 0)
+							{
+								// 弾の位置をセット、位置はボール君の中心にする
+								BallShotX[i] = (BallW - BallShotW) / 2 + BallX;
+								BallShotY[i] = (BallH - BallShotH) / 2 + BallY;
+
+								// 弾は現時点を持って存在するので、存在状態を保持する変数に１を代入する
+								ShotFlag[i] = 1;
+
+								// 一つ弾を出したので弾を出すループから抜けます
+								break;
+							}
+						}
+					}
+
+					// 前フレームでショットボタンを押されていたかを保存する変数に１(おされていた)を代入
+					ShotBFlag = 1;
+				}
+				else
+				{
+					// ショットボタンが押されていなかった場合は
+					// 前フレームでショットボタンが押されていたかを保存する変数に０(おされていない)を代入
+					ShotBFlag = 0;
+				}
+
+				// ボール君が画面左端からはみ出そうになっていたら画面内の座標に戻してあげる
+				if (BallX < 0) BallX = 0;
+
+				// ボール君が画面右端からはみ出そうになっていたら画面内の座標に戻してあげる
+				if (BallX > 640 - 64) BallX = 640 - 64;
+
+				// ボール君が画面上端からはみ出そうになっていたら画面内の座標に戻してあげる
+				if (BallY < 0) BallY = 0;
+
+				// ボール君が画面下端からはみ出そうになっていたら画面内の座標に戻してあげる
+				if (BallY > 480 - 64) BallY = 480 - 64;
+
+				// ボール君を描画
+				DrawGraph(BallX, BallY, BallGraph, FALSE);
 			}
-
-			// ボール君が画面左端からはみ出そうになっていたら画面内の座標に戻してあげる
-			if (BallX < 0) BallX = 0;
-
-			// ボール君が画面右端からはみ出そうになっていたら画面内の座標に戻してあげる
-			if (BallX > 640 - 64) BallX = 640 - 64;
-
-			// ボール君が画面上端からはみ出そうになっていたら画面内の座標に戻してあげる
-			if (BallY < 0) BallY = 0;
-
-			// ボール君が画面下端からはみ出そうになっていたら画面内の座標に戻してあげる
-			if (BallY > 480 - 64) BallY = 480 - 64;
-
-			// ボール君を描画
-			DrawGraph(BallX, BallY, BallGraph, FALSE);
 		}
 
 		// 弾の数だけ弾を動かす処理を繰り返す
@@ -224,13 +281,24 @@ int WINAPI WinMain(
 				// 顔を歪めている場合はダメージ時のグラフィックを描画する
 				DrawGraph(SikakuX, SikakuY, SikakuDamageGraph, FALSE);
 
-				// 顔を歪めている時間を測るカウンターに１を加算する
-				SikakuDamageCounter++;
+				if (SikakuLife > 0)
+				{
+					// 四角君のライフが0以上の時は、
+					// 顔を歪めている時間を測るカウンターに１を加算する
+					SikakuDamageCounter++;
+				}
 
 				// もし顔を歪め初めて ３０ フレーム経過していたら顔の歪んだ状態から
 				// 元に戻してあげる
 				if (SikakuDamageCounter == 30)
 				{
+					// 四角君のライフが0になった時
+					if (SikakuLife == 0)
+					{
+						// 四角君から弾を発射しない
+						ETamaFlag = 0;
+					}
+
 					// 『歪んでいない』を表す０を代入
 					SikakuDamageFlag = 0;
 				}
@@ -266,8 +334,9 @@ int WINAPI WinMain(
 				// もしカウンター変数が６０だった場合は弾を撃つ処理を行う
 				if (ETamaCounter == 60)
 				{
+					// 四角のライフが0になっておらず、
 					// もし既に弾が『飛んでいない』状態だった場合のみ発射処理を行う
-					if (ETamaFlag == 0)
+					if (ETamaFlag == 0 && SikakuLife > 0)
 					{
 						// 弾の発射位置を設定する
 						ETamaX = SikakuX + SikakuW / 2 - ETamaW / 2;
@@ -320,6 +389,16 @@ int WINAPI WinMain(
 			{
 				// 接触している場合は当たった弾の存在を消す
 				ETamaFlag = 0;
+
+				if (BallLife > 0)
+				{
+					// ボール君のライフが1以上の時、
+					// 四角君の弾を受けたら、ボール君のライフを1減らす
+					BallLife--;
+
+					// ボール君の顔を歪めているかどうかを保持する変数に『歪めている』を表す１を代入
+					BallDamageFlag = 1;
+				}
 			}
 
 			// もし弾が画面からはみ出てしまった場合は弾の状態を『飛んでいない』
@@ -346,6 +425,12 @@ int WINAPI WinMain(
 					// 接触している場合は当たった弾の存在を消す
 					ShotFlag[i] = 0;
 
+					// 四角君が顔を歪めている時は、ダメージを受けない
+					if (SikakuDamageFlag == 0)
+					{
+						SikakuLife--;
+					}
+
 					// 四角君の顔を歪めているかどうかを保持する変数に『歪めている』を表す１を代入
 					SikakuDamageFlag = 1;
 
@@ -353,6 +438,30 @@ int WINAPI WinMain(
 					SikakuDamageCounter = 0;
 				}
 			}
+		}
+
+		{
+			// 勝敗を表示する
+
+			if (SikakuLife == 0)
+			{
+				char str[] = "あなたの勝ち";
+				DrawFormatString(WindowSizeX / 2 - (GetDrawFormatStringWidth(str) / 2),
+					0, GetColor(255, 255, 255), str);
+			}
+
+			if (BallLife == 0)
+			{
+				char str[] = "あなたの負け";
+				DrawFormatString(WindowSizeX / 2 - (GetDrawFormatStringWidth(str) / 2),
+					0, GetColor(255, 255, 255), str);
+			}
+		}
+
+		{
+			// ボール君と四角君のライフを表示する
+			DrawFormatString(0, 0, GetColor(255, 255, 255), "BallLife : %d", BallLife);
+			DrawFormatString(0, 15, GetColor(255, 255, 255), "SikakuLife : %d", SikakuLife);
 		}
 
 		// 裏画面の内容を表画面にコピーする

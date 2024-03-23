@@ -312,6 +312,16 @@ int WINAPI WinMain(
 			ETamaX += ETamaSx;
 			ETamaY += ETamaSy;
 
+			// ƒ{[ƒ‹ŒN‚Æ‚Ì“–‚½‚è”»’è
+			if (((ETamaX > BallX && ETamaX < BallX + BallW) ||
+				(BallX > ETamaX && BallX < ETamaX + BallShotW)) &&
+				((ETamaY > BallY && ETamaY < BallY + BallH) ||
+					(BallY > ETamaY && BallY < ETamaY + BallShotW)))
+			{
+				// ÚG‚µ‚Ä‚¢‚éê‡‚Í“–‚½‚Á‚½’e‚Ì‘¶Ý‚ðÁ‚·
+				ETamaFlag = 0;
+			}
+
 			// ‚à‚µ’e‚ª‰æ–Ê‚©‚ç‚Í‚Ýo‚Ä‚µ‚Ü‚Á‚½ê‡‚Í’e‚Ìó‘Ô‚ðw”ò‚ñ‚Å‚¢‚È‚¢x
 			// ‚ð•\‚·‚O‚É‚·‚é
 			if (ETamaY > 480 || ETamaY < 0 ||
